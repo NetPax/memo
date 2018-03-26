@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>MEMO GAME App</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto&amp;subset=latin-ext" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&amp;subset=latin-ext" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Modak:400,700" rel="stylesheet">
+  <link href="css/font-awesome.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+  <noscript>
+    You need to enable JavaScript to run this app.
+  </noscript>
+  <div id="root">
+  </div>
+
+  <script src="js/react.production.min.js"></script>
+  <script src="js/react-dom.production.min.js"></script>
+  <script src="js/babel.min.js"></script>
+
+  <script type="text/babel">
+  class App extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        numbers: [
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false},
+          {value: 0, clicked: false, found: false}
+        ],
+        isPlaying: false,
+        gameMessage: 'Naciśnij PLAY aby zagrać!',
+        clicks: 0,
+        style: 'animal',
+        gameEnd: false
+      };
+    }
+
+    startGame() {
+      if (this.state.isPlaying === false) {
+        const riddleNumbers = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7];
+
+        let randomNumbersArray = riddleNumbers
+        .sort(() => .5 - Math.random())
+        .map(number => ({value: number, clicked: false, found: false}));
+
+        this.setState({
+          numbers: randomNumbersArray,
+          isPlaying: true,
+          gameMessage: 'Odnajdź wszystkie pary! Powodzenia!',
+          gameEnd: false
+        });
+
+      }
+    }
+
+    selectStyle(style) {
+      if (this.state.isPlaying === false) {
+        this.setState({
+          style: style
+        });
+      }
+    }
+
+    checkNumber(numberIndex) {
+      if (this.state.isPlaying) {
+        let newNumbers = this.state.numbers;
+        if (newNumbers[numberIndex].clicked === false) {
+          newNumbers[numberIndex].clicked = true;
+          this.setState({
+            numbers: newNumbers,
+            clicks: this.state.clicks+1
+          }, () => {
+            if (this.state.clicks === 2) {
+              let newNumbers = this.state.numbers;
+              let filterNumbers = newNumbers.filter(number => number.clicked === true);                  //maybe better solution
+              let sameNumbers = filterNumbers.every(number => number.value === filterNumbers[0].value);  //maybe better solution
+
+              console.log(filterNumbers);
+              if (sameNumbers) {
+                console.log('Znalazłes dwa takie same obrazki!!!');
+                let newNumbers = this.state.numbers;
+                newNumbers.forEach(number => {
+                  if (number.clicked === true) {
+                    number.clicked = false;
+                    number.found = true;
+                  }
+                });
+                this.setState({
+                  numbers: newNumbers,
+                  clicks: 0
+                });
+              } else {
+                console.log('Pomyliłes sie!!!');
+                newNumbers.forEach(number => number.clicked = false);
+                setTimeout(() => {
+                  this.setState({
+                    numbers: newNumbers,
+                    clicks: 0
+                  });
+                }, 1000);
+              }
+            }
+          });
+        } else {
+          console.log('cos sie dzieje dziwnego, kliknales 2x w to samo');
+        }
+      }
+    }
+
+    componentDidUpdate() {
+      if (this.state.isPlaying) {
+        let newNumbers = this.state.numbers;
+        let allNumbersFound = newNumbers.every(number => number.found === true);
+        if (allNumbersFound) {
+          this.setState({
+            isPlaying: false,
+            gameEnd: true,
+            gameMessage: 'Gratulacje. Graj dalej!'
+          });
+        } else {
+          console.log('Jeszcze nie wszystkie');
+        }
+      }
+    }
+
+    render() {
+      const isGameEnd = this.state.gameEnd;
+      const isPlaying = this.state.isPlaying;
+      const activeStyle = this.state.style;
+      const styles = ['animal', 'color', 'number'];
+      return (
+        <div className="app">
+        {
+          isGameEnd ? (
+            <div className="popup popup--visible"><h3 className="popup__message">{this.state.gameMessage}</h3></div>
+          ) : (
+            <div className="popup"><h3 className="popup__message ">{this.state.gameMessage}</h3></div>
+          )
+        }
+
+        <div className="header">
+        <h2 className="header__cta">MEMO GAME</h2>
+        <button disabled={isPlaying ? 'disabled' : ''} className={isPlaying ? 'btn btn--play' : 'btn btn--play bouncing'} onClick={this.startGame.bind(this)}>PLAY</button>
+        <div className="switch">
+        {
+          styles.map(style => {
+            let classes = 'switch__icon ';
+            if (style === activeStyle) {
+              classes += 'switch__icon--active';
+            }
+            let iconSrc = 'img/style-' + style + '.png';
+            return(
+              <img className={classes} src={iconSrc} onClick={this.selectStyle.bind(this, style)} />
+            );
+          })
+        }
+        </div>
+        </div>
+        <hr />
+        {isPlaying ? (<p className="info detail">{this.state.gameMessage}</p>) : (<p className="info detail">{this.state.gameMessage}</p>)}
+        <div className="riddle">
+        {
+          this.state.numbers.map((number, index) => {
+            let classes = 'riddle__tile ';
+            let showTile = null;
+            if (number.clicked || number.found) {
+              showTile = 'img/' + this.state.style + '-' + number.value + '.png';
+              classes += 'tile_animation';
+            } else {
+              showTile = 'img/tile.png';
+            }
+            return (
+              <img src={showTile} className={classes} onClick={this.checkNumber.bind(this, index)}/>
+            );
+          })
+        }
+        </div>
+        <hr />
+        <p className="author detail">© Wojciech Stawarz <a href="http://inforeklama.com.pl/cv/" className="detail" title="Wojciech Stawarz - Front-end developer" target="_blank"><i className="fa fa-link"></i></a> <a href="https://www.linkedin.com/in/wojciech-stawarz/" className="detail" title="Wojciech Stawarz - linkedIn" target="_blank"><i className="fa fa-linkedin-square"></i></a></p>
+        </div>
+      );
+    }
+  }
+
+  ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
